@@ -97,9 +97,11 @@
 		}
 	\maketitle
 	
-	\begin{abstract}
-		This paper determines the parameter pairs $(a, b)$ for the function $f(t) = e^{-at}u(t) + e^{bt}u(-t)$, when subject to normalization, such that these pairs correspond to the endpoints of the latus recta of an associated conic. The work derives the conic equation binding the parameters, applies eigen-decomposition, and uses affine transformations to identify the valid $(a, b)$ values.
-	\end{abstract}
+\begin{abstract}
+	This paper determines the parameter pairs $(a, b)$ for the function $f(t) = e^{-at}u(t) + e^{bt}u(-t)$, subject to normalization, such that these pairs correspond to the endpoints of the latus recta of an associated conic. The work derives the conic equation binding the parameters, applies eigen-decomposition, and uses affine transformations to identify the valid $(a, b)$ values. Additionally, a numerical gradient descent method is proposed to determine symmetric truncation points $\theta = (\theta_0, \theta_1)$ such that the areas under $f(t)$ on either side of $t=0$ are equal. This approach allows for a flexible choice of the truncation window.
+\end{abstract}
+
+
 
 	\section{Question}
 	Given that
@@ -207,6 +209,53 @@
 		\caption{Function $f(t)$ for valid $(a, b)$}
 		\label{fig:Function}
 	\end{figure}
+	
+	\section{Numerical Area Balancing and Gradient Descent}
+	We need to find the endpoints $(\theta_0, \theta_1)$ and truncate the function f(t), such that the the area under $f(t)$ is symmetric about $t=0$. For this, we will use gradient descent so that we get the closest solution to our guess.
+	
+	Define:
+	\begin{align}
+		A_L(\theta_0) &= \int_{\theta_0}^{0} e^{bt} \, dt = \frac{1 - e^{b\theta_0}}{b} \\
+		A_R(\theta_1) &= \int_{0}^{\theta_1} e^{-at} \, dt = \frac{1 - e^{-a\theta_1}}{a}
+	\end{align}
+	
+	We seek $\theta = (\theta_0, \theta_1)$ such that $A_L(\theta_0) = A_R(\theta_1)$. Rearranging:
+	\begin{align}
+		\frac{1 - e^{b\theta_0}}{b} - \frac{1 - e^{-a\theta_1}}{a} = 0
+	\end{align}
+	
+	This nonlinear equation cannot be solved analytically in closed form. Thus, we define a cost function:
+	\begin{align}
+		\mathcal{C}(\theta) =\left(  \frac{1 - e^{b\theta_0}}{b} - \frac{1 - e^{-a\theta_1}}{a} \right) ^ 2
+	\end{align}
+	
+	We minimize this cost using gradient descent:
+	\begin{align}
+		\frac{d\mathcal{C}}{d\theta_0} &= -\left(  \frac{1 - e^{b\theta_0}}{b} - \frac{1 - e^{-a\theta_1}}{a} \right) e^{b\theta_0} \\
+		\frac{d\mathcal{C}}{d\theta_1} &= -\left(  \frac{1 - e^{b\theta_0}}{b} - \frac{1 - e^{-a\theta_1}}{a} \right) e^{-a\theta_1}
+	\end{align}
+	
+	The update rule becomes:
+	\begin{align}
+		\theta_{n+1} \leftarrow \theta_{n} - \eta \cdot \nabla \mathcal{C}(\theta_n)
+	\end{align}
+	where $\eta$ is a learning rate.
+	
+	We initialize $\theta$ with a reasonable estimate and iterate until $|\mathcal{C}(\theta)| < 10^{-10}$. The resulting $\theta$ yields a numerically balanced integral under $f(t)$ on both sides of the origin.
+	
+	\begin{align}
+		\theta_{(0)} = [-2, 3]^\text{T} \rightarrow \theta_{n} = [-0.37815999 , 3.00038288]^\text{T}
+	\end{align}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\columnwidth]{figs/window.png} 
+		\caption{Truncated Function $f(t)$ }
+		\label{fig:Window}
+	\end{figure}
+	
+	
+	
 	
 	% Bibliography style
 	\bibliographystyle{IEEEtran}
